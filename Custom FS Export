@@ -1,1 +1,99 @@
+sudo usermod -aG docker ||youractualusername||
+newgrp docker
+docker --version
+docker ps
+# Check if freeswitch binary exists
+which freeswitch
 
+# Find the binary
+find / -name "freeswitch" -type f 2>/dev/null
+
+# Check if it's running as a service
+systemctl status freeswitch
+
+# Check running processes
+ps aux | grep freeswitch
+
+# Check default config locations
+ls /etc/freeswitch/
+ls /usr/share/freeswitch/
+ls /var/lib/freeswitch/
+
+# Check what's actually running and with what paths
+ps aux | grep freeswitch
+
+# Check systemd service for config path
+systemctl cat freeswitch
+
+ls /usr/local/freeswitch/
+du -sh /usr/local/freeswitch/
+
+cd /usr/local
+tar -czf /root/freeswitch-backup.tar.gz freeswitch/
+
+ls -lh /root/freeswitch-backup.tar.gz
+
+ls -lh /root/Dockerfile
+cat /root/Dockerfile
+-----------------------------
+cat > /root/Dockerfile << 'EOF'
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y \
+    libssl3 \
+    libcurl4 \
+    libsqlite3-0 \
+    libpcre3 \
+    libedit2 \
+    libldns3 \
+    liblua5.4-0 \
+    libopus0 \
+    libsndfile1 \
+    libspandsp2 \
+    libtiff6 \
+    libsofia-sip-ua0 \
+    uuid-runtime \
+    libpython3.11 \
+    libpq5 \
+    libicu72 \
+    libavcodec59 \
+    libavformat59 \
+    libavutil57 \
+    libswscale6 \
+    libyaml-0-2 \
+    libpng16-16 \
+    libv8-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN groupadd -r freeswitch && useradd -r -g freeswitch freeswitch
+
+COPY freeswitch-backup.tar.gz /tmp/
+RUN tar -xzf /tmp/freeswitch-backup.tar.gz -C /usr/local/ && \
+    rm /tmp/freeswitch-backup.tar.gz && \
+    chown -R freeswitch:freeswitch /usr/local/freeswitch
+
+EXPOSE 5060/udp 5060/tcp 5080/udp 5080/tcp 8021/tcp 16384-32768/udp
+
+CMD ["/usr/local/freeswitch/bin/freeswitch", "-u", "freeswitch", "-g", "freeswitch", "-nonat", "-nf"]
+EOF
+---------------------------------------
+cd /root
+docker build -t saravanansaru/fs:v1 .
+
+docker login
+
+docker push saravanansaru/fs:v1
+docker tag saravanansaru/fs:v1 saravanansaru/fs:latest
+docker push saravanansaru/fs:latest
+########To pull and run on any other environment:
+docker pull saravanansaru/fsagnocon:latest
+
+# Run it
+docker run -d \
+  --name freeswitch \
+  --network host \
+  saravanansaru/fsagnocon:latest
+
+
+docker ps
+docker logs freeswitch
