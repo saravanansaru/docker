@@ -104,3 +104,6 @@ docker rm -f $(docker ps -aq)
 
 remove images at local
 docker rmi -f $(docker images -aq)
+
+full cleanup
+docker system prune -a -f
