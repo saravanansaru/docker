@@ -93,7 +93,14 @@ docker run -d \
   --name freeswitch \
   --network host \
   saravanansaru/fsagnocon:latest
-
+docker stop freeswitch
+docker rm freeswitch
 
 docker ps
 docker logs freeswitch
+
+remove local files
+docker rm -f $(docker ps -aq)
+
+remove images at local
+docker rmi -f $(docker images -aq)
